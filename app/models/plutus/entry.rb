@@ -21,10 +21,10 @@ module Plutus
   # @see http://en.wikipedia.org/wiki/Journal_entry Journal Entry
   #
   # @author Michael Bulat
-  class Entry < ActiveRecord::Base
+  class Entry < ApplicationRecord
     before_save :default_date
 
-    if ActiveRecord::VERSION::MAJOR > 4
+    if ActiveRecord::VERSION::MAJOR > 8
       belongs_to :commercial_document, polymorphic: true, optional: true
     else
       belongs_to :commercial_document, polymorphic: true
@@ -50,14 +50,14 @@ module Plutus
       todays_date = ActiveRecord.default_timezone == :utc ? Time.now.utc : Time.now
       self.date ||= todays_date
     end
-  
+
     # Support the deprecated .build method
     def self.build(hash)
       ActiveSupport::Deprecation.warn('Plutus::Transaction.build() is deprecated (use new instead)', caller)
       new(hash)
     end
 
-    private 
+    private
 
     def credit_amounts?
       errors.add(:base, 'Entry must have at least one credit amount') if credit_amounts.blank?
@@ -68,9 +68,9 @@ module Plutus
     end
 
     def amounts_cancel?
-      if credit_amounts.balance_for_new_record != debit_amounts.balance_for_new_record
-        errors.add(:base, 'The credit and debit amounts are not equal')
-      end
+      return unless credit_amounts.balance_for_new_record != debit_amounts.balance_for_new_record
+
+      errors.add(:base, 'The credit and debit amounts are not equal')
     end
   end
 end
